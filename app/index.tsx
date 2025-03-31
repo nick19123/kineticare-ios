@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Animated, Modal, TouchableOpacity, Text, View, Image, SafeAreaView, Dimensions, Linking, Alert } from 'react-native';
 import styles from './styles';
 import { Plan, Exercise, loadPlansFromStorage } from './plans';
-import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, Roboto_400Regular, Roboto_700Bold } from '@expo-google-fonts/roboto';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -10,7 +9,6 @@ import Icon from 'react-native-vector-icons/Ionicons';
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
 
-SplashScreen.preventAutoHideAsync();
 
 const Index = () => {
 
@@ -42,7 +40,7 @@ const Index = () => {
 
   useEffect(() => {
     if (fontsLoaded && Object.keys(planData).length > 0) {
-      SplashScreen.hideAsync(); // Hide splash screen once data and fonts are loaded
+      //SplashScreen.hideAsync(); // Hide splash screen once data and fonts are loaded
     }
   }, [fontsLoaded, planData]);
 
@@ -140,6 +138,7 @@ const Index = () => {
   const openNestedModal = (exercise: Exercise) => {
     console.log('Opening nested modal for exercise:', exercise);
     setSelectedExercise(exercise);
+    setModalVisible(false);
     setNestedVisible(true);
     Animated.timing(nestedAnimation, {
       toValue: 1,
@@ -156,6 +155,7 @@ const Index = () => {
     }).start(() => {
       setSelectedExercise(null);
       setNestedVisible(false);
+      setModalVisible(true);
     });
   };
 
@@ -188,11 +188,14 @@ const Index = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.logoContainer}>
+        <View style={[styles.logoContainer, { alignItems: 'center' }]}>
           <Image 
             source={require('./assets/images/logo.png')}
             style={styles.logo}
           />
+          <TouchableOpacity style={styles.closeButton}>
+              <Icon name="camera-outline" size={screenWidth*0.10} color="#7874ac" />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -291,7 +294,7 @@ const Index = () => {
       </Modal>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>To add plans, check out our website</Text>
+        <Text style={styles.footerText}>www.kineticare.org</Text>
       </View>
     </SafeAreaView>
   );
