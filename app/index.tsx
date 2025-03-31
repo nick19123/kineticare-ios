@@ -138,6 +138,7 @@ const Index = () => {
   };
 
   const openNestedModal = (exercise: Exercise) => {
+    console.log('Opening nested modal for exercise:', exercise);
     setSelectedExercise(exercise);
     setNestedVisible(true);
     Animated.timing(nestedAnimation, {
