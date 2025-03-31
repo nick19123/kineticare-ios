@@ -3,4 +3,4 @@
 
 ## Authors
 
-- [@nick19123](https://www.github.com/octokatherine)
+- [@nick19123](https://www.github.com/nick19123)
