@@ -193,9 +193,6 @@ const Index = () => {
             source={require('./assets/images/logo.png')}
             style={styles.logo}
           />
-          <TouchableOpacity style={styles.closeButton}>
-              <Icon name="camera-outline" size={screenWidth*0.10} color="#7874ac" />
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -294,8 +291,16 @@ const Index = () => {
       </Modal>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>www.kineticare.org</Text>
-      </View>
+          <TouchableOpacity style={styles.barButton}>
+            <Icon name="home" size={screenWidth * 0.075} color="#7874ac" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.barButton}>
+            <Icon name="qr-code" size={screenWidth * 0.075} color="#7874ac" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.barButton}>
+            <Icon name="construct" size={screenWidth * 0.075} color="#7874ac" />
+          </TouchableOpacity>
+        </View>
     </SafeAreaView>
   );
 };

@@ -40,6 +40,9 @@ export default StyleSheet.create({
   },
   footer: {
     padding: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    //alignItems: 'center',
     backgroundColor: '#f8f8f8',
     alignItems: 'center',
   },
@@ -176,5 +179,16 @@ export default StyleSheet.create({
   grayBlobText: {
     color: 'white',
     fontSize: 10,
+  },
+  barButton: {
+    paddingVertical: 0,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  
+  barButtonText: {
+    color: '#7874ac',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
