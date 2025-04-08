@@ -4,7 +4,7 @@ const { width, height } = Dimensions.get('window');
 export default StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f8f8',
   },
   header: {
     paddingVertical: 10,
@@ -61,7 +61,7 @@ export default StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
     height: '100%',
-    backgroundColor: 'white',
+    backgroundColor: '#f8f8f8',
     borderRadius: 10,
     padding: 20,
   },
@@ -185,10 +185,53 @@ export default StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 5,
   },
-  
   barButtonText: {
     color: '#7874ac',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  iconButton: {
+    backgroundColor: '#ffffff',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingVertical: 0.1,
+    paddingHorizontal: 0.1,
+    borderRadius: 1,
+  },
+  cameraView: {
+    position: 'absolute',
+    top: '10%',
+    width: '95%',
+    height: '80%',
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#000'
+  },
+  cameraOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scanningBox: {
+    width: '70%',
+    aspectRatio: 1,
+    borderWidth: 2,
+    borderColor: 'rgba(120, 116, 172, 1)',
+    borderRadius: 20,
+    backgroundColor:'transparent',
+    zIndex: 1,
+  },
+  scanningBoxImage: {
+    width: '100%',
+    height: '100%',
+    aspectRatio: 1,
+    resizeMode: 'contain',
+    opacity: 0.5,
   },
 });
