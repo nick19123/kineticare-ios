@@ -10,7 +10,7 @@ export const initialPlans = {
         s: 2,
         d: "30 seconds",
         t: "1 time / day",
-        de: "Lie face down, lift your body on your elbows and toes, keep a straight spine, ensure your hips and pelvis stay level, and maintain a neutral pelvic position throughout.",
+        de: "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec qu",
         i: 'singleknee_cni3ab',
       },
       {

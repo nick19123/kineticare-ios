@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Dimensions,
   Alert,
+  Linking,
 } from "react-native";
 import styles from "./styles";
 import { Plan, Exercise, loadPlansFromStorage } from "./plans";
@@ -25,6 +26,7 @@ import { AdvancedImage } from "cloudinary-react-native";
 import { Cloudinary } from "@cloudinary/url-gen";
 import { decode } from "base64-arraybuffer";
 import "../global.css";
+import Footer from "@/components/Footer";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -38,6 +40,8 @@ const Index = () => {
   //camera
   const [permission, requestPermission] = useCameraPermissions();
   const isPermissionGranted = Boolean(permission?.granted);
+  const isScanningRef = useRef(true);
+  const isProcessingScan = useRef(false);
   const [isScanning, setIsScanning] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
   const [modalVisible, setModalVisible] = useState(false);
@@ -73,45 +77,34 @@ const Index = () => {
   }, [fontsLoaded, planData]);
 
   // If fonts aren't loaded, return null to keep the splash screen visible
-  if (!fontsLoaded || planData.length === 0) {
-    return null; // Splash screen remains visible
+  if (!fontsLoaded) {
+    return null;
   }
 
-  const removeExercise = (exerciseToRemove: Exercise) => {
-    if (selectedPlan) {
-      const updatedExercises = selectedPlan.e.filter(
-        (exercise) => exercise.eid !== exerciseToRemove.eid
-      );
-      if (updatedExercises.length === 0) {
-        // Remove the plan if there are no exercises left
-        const updatedPlanData = planData.filter(
-          (plan) => plan.p !== selectedPlan.p
-        );
-        setPlanData(updatedPlanData);
-        setSelectedPlan(null);
-      } else {
-        // Update the plan with the remaining exercises
-        const updatedPlan = { ...selectedPlan, e: updatedExercises };
-        const updatedPlanData = planData.map((plan) =>
-          plan.p === selectedPlan.p ? updatedPlan : plan
-        );
-        setPlanData(updatedPlanData);
-        setSelectedPlan(updatedPlan);
-      }
-    }
-  };
+  const removePlan = async (planToRemove: Plan) => {
+    try {
+      const existingPlans = await AsyncStorage.getItem("plans");
+      let plans: Plan[] = existingPlans ? JSON.parse(existingPlans) : [];
 
-  const removePlan = (planToRemove: Plan) => {
-    const updatedPlanData = planData.filter(
-      (plan) => plan.p !== planToRemove.p
-    );
-    if (updatedPlanData.length === 0) {
-      // Reload the default plan if no plans are left
-      setPlanData(Object.values(initialPlans));
-    } else {
-      setPlanData(updatedPlanData);
+      const indexToRemove = plans.findIndex(
+        (plan) => plan.p === planToRemove.p
+      );
+      if (indexToRemove !== -1) {
+        plans.splice(indexToRemove, 1);
+      }
+
+      const hasExercises = plans.some(
+        (plan) => Array.isArray(plan.e) && plan.e.length > 0
+      );
+
+      const finalPlans = hasExercises ? plans : Object.values(initialPlans);
+
+      await AsyncStorage.setItem("plans", JSON.stringify(finalPlans));
+      setPlanData(finalPlans);
+      setSelectedPlan(null);
+    } catch (error) {
+      console.error("Error removing plan:", error);
     }
-    setSelectedPlan(null);
   };
 
   const openModal = () => {
@@ -135,23 +128,10 @@ const Index = () => {
     setPlanData(plans);
   };
 
-  const clearStorage = async () => {
-    try {
-      await AsyncStorage.clear();
-      console.log("AsyncStorage cleared successfully!");
-      setPlanData([]); // Clear the plan data from the state
-      Alert.alert("Storage Cleared", "All saved data has been cleared.");
-      fetchPlans(); // Fetch plans again to ensure the UI is updated
-    } catch (error) {
-      console.error("Error clearing AsyncStorage:", error);
-      Alert.alert("Error", "Failed to clear storage.");
-    }
-  };
-
-  const showRemovePrompt = (exercise: Exercise) => {
-    Alert.alert(
-      "Remove Exercise",
-      "Are you sure you want to remove this exercise from the plan? This action cannot be undone.",
+  const clearStorage = () => {
+    Alert.prompt(
+      "Reset Data",
+      'Type "confirm" to remove all plans. This action cannot be undone and will require you to add plans again via the camera.',
       [
         {
           text: "Cancel",
@@ -159,11 +139,29 @@ const Index = () => {
         },
         {
           text: "Remove",
-          onPress: () => removeExercise(exercise),
+          onPress: async (input) => {
+            if (input?.toLowerCase() === "confirm") {
+              try {
+                await AsyncStorage.clear();
+                console.log("AsyncStorage cleared successfully!");
+                setPlanData([]);
+                Alert.alert(
+                  "Storage Cleared",
+                  "All saved data has been cleared."
+                );
+                fetchPlans();
+              } catch (error) {
+                console.error("Error clearing AsyncStorage:", error);
+                Alert.alert("Error", "Failed to clear storage.");
+              }
+            } else {
+              Alert.alert("Cancelled", "Plan was not removed.");
+            }
+          },
           style: "destructive",
         },
       ],
-      { cancelable: true }
+      "plain-text"
     );
   };
 
@@ -202,35 +200,74 @@ const Index = () => {
       <View style={styles.content}>
         {selectedExercise ? (
           // Display selected exercise details
-          <View className="flex flex-column justify-center items-center">
-              <AdvancedImage
-                cldImg={cld
-                  .image(selectedExercise.i)
-                  .format("auto")
-                  .quality("auto")}
-                style={{
-                  width: screenWidth * 0.5,
-                  height: screenWidth * 0.5,
-                  resizeMode: "contain",
-                }}
-              />
-            <View 
-              className="flex flex-start items-start"
-            >
-              <Text style={styles.nestedModalTitle}>{selectedExercise.n}</Text>
-              <Text style={styles.nestedModalDetailText}>
-                Reps: {selectedExercise.r}
+          <View className="flex flex-column justify-center items-center mt-20">
+            <AdvancedImage
+              cldImg={cld
+                .image(selectedExercise.i)
+                .format("auto")
+                .quality("auto")}
+              style={{
+                width: screenWidth * 0.5,
+                height: screenWidth * 0.5,
+                resizeMode: "contain",
+              }}
+            />
+            <View className="flex items-center h-screen">
+              <Text className="font-bold text-3xl text-[#7076af] text-left self-start ml-[5%] mb-[3%]">
+                {selectedExercise.n}
               </Text>
-              <Text>Sets: {selectedExercise.s}</Text>
-              <Text style={styles.nestedModalDetailText}>
-                Duration: {selectedExercise.d}
-              </Text>
-              <Text style={styles.nestedModalDetailText}>
-                Time(s): {selectedExercise.t}
-              </Text>
-              <Text style={styles.nestedModalDetailText}>
-                {selectedExercise.de}
-              </Text>
+              <View className="flex-row w-full mb-2">
+                <View className="flex-row justify-center w-full mb-2">
+                  <View className="flex-row items-center rounded-2xl overflow-hidden bg-[#74ac85] w-[45%]">
+                    <Text className="w-[50%] p-2 bg-[#5e9670] text-white text-lg text-center font-semibold">
+                      Reps
+                    </Text>
+                    <Text className="w-[50%] p-2 text-white font-bold text-lg text-center">
+                      {selectedExercise.r}
+                    </Text>
+                  </View>
+
+                  <View className="ml-[2%] flex-row items-center rounded-2xl overflow-hidden bg-[#cf935c] w-[45%]">
+                    <Text className="w-[50%] p-2 bg-[#b77b4b] text-white text-lg text-center font-semibold">
+                      Sets
+                    </Text>
+                    <Text className="w-[50%] p-2 text-white font-bold text-lg text-center">
+                      {selectedExercise.s}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View className="flex flex-row justify-center items-center rounded-2xl overflow-hidden bg-[#00768c] mb-3 w-[92%]">
+                <Text className="w-[50%] p-2 bg-[#006070] text-white text-lg text-center font-semibold">
+                  Duration:
+                </Text>
+                <Text className="w-[50%] p-2 text-white font-bold text-lg text-center">
+                  {selectedExercise.d}
+                </Text>
+              </View>
+
+              <View className="flex flex-row justify-center items-center rounded-2xl overflow-hidden bg-[#b9633a] mb-3 w-[92%]">
+                <Text className="w-[50%] p-2 bg-[#a2542f] text-white text-lg text-center font-semibold">
+                  Time:
+                </Text>
+                <Text className="w-[50%] p-2 text-white font-bold text-lg text-center">
+                  {selectedExercise.t}
+                </Text>
+              </View>
+
+              <View className="flex flex-col justify-center items-center rounded-2xl overflow-hidden mb-2 w-[92%]">
+                <Text className="flex p-2 italic text-white bg-gray-400 font-bold text-xl text-center rounded-2xl">
+                  " {selectedExercise.de} "
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setSelectedExercise(null)}>
+                <View className="flex flex-row justify-right items-center rounded-2xl overflow-hidden bg-[#793339] mb-3 w-[25%]">
+                  <Text className="p-2 text-white font-bold text-lg">
+                    Close
+                  </Text>
+                </View>
+              </TouchableOpacity>
             </View>
           </View>
         ) : selectedPlan ? (
@@ -242,7 +279,6 @@ const Index = () => {
                 <TouchableOpacity
                   key={index}
                   onPress={() => setSelectedExercise(exercise)}
-                  onLongPress={() => showRemovePrompt(exercise)}
                 >
                   <View className="flex flex-row justify-center items-center rounded-2xl overflow-hidden bg-[#74ac85] mb-2">
                     <View className="flex-1 p-2 bg-[#5e9670]">
@@ -252,7 +288,9 @@ const Index = () => {
                     </View>
                     <View className="flex-[2] p-2">
                       <Text className="text-xl font-semibold text-white text-center">
-                        {exercise.n.length > 20 ? exercise.n.slice(0, 17) + "..." : exercise.n}
+                        {exercise.n.length > 20
+                          ? exercise.n.slice(0, 17) + "..."
+                          : exercise.n}
                       </Text>
                     </View>
                   </View>
@@ -302,17 +340,15 @@ const Index = () => {
               style={styles.cameraView}
               facing="back"
               onBarcodeScanned={async ({ data }) => {
-                if (!isScanning) return;
+                if (isProcessingScan.current) return;
+
+                isProcessingScan.current = true;
 
                 try {
-                  setIsScanning(false);
-                  console.log("Scanned data:", data);
                   const urlDecodedData = decodeURIComponent(data);
-                  console.log("Scanned data:", urlDecodedData);
                   const decodedData = new TextDecoder().decode(
                     decode(urlDecodedData)
                   );
-                  console.log("Scanned data:", decodedData);
                   const parsedData = JSON.parse(decodedData);
 
                   const ValidatePlan =
@@ -339,17 +375,24 @@ const Index = () => {
                     );
 
                   if (ValidatePlan) {
-                    setModalVisible(false);
                     const existingPlans = await AsyncStorage.getItem("plans");
                     const plans = existingPlans
                       ? JSON.parse(existingPlans)
                       : [];
+
+                    if (plans.length >= 5) {
+                      Alert.alert(
+                        "Plan Limit Reached",
+                        "You can only have up to 5 plans."
+                      );
+                      return;
+                    }
+
                     plans.push(parsedData);
                     await AsyncStorage.setItem("plans", JSON.stringify(plans));
-                    console.log("Plan added successfully:", parsedData);
                     setPlanData(plans);
+                    setModalVisible(false);
                   } else {
-                    setIsScanning(true);
                     Alert.alert(
                       "Invalid QR Code",
                       "The scanned QR code does not contain valid plan data."
@@ -357,8 +400,14 @@ const Index = () => {
                   }
                 } catch (error) {
                   console.error("Error parsing QR code data:", error);
-                  setIsScanning(true);
-                  closeModal();
+                  Alert.alert(
+                    "Invalid QR Code",
+                    "The scanned QR code does not contain valid plan data."
+                  );
+                } finally {
+                  setTimeout(() => {
+                    isProcessingScan.current = false;
+                  }, 3000); // gives time before next scan can trigger
                 }
               }}
             >
@@ -372,52 +421,17 @@ const Index = () => {
               </View>
             </CameraView>
           </View>
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.barButton}
-              onPress={() => {
-                setSelectedPlan(null);
-                setSelectedExercise(null);
-                setModalVisible(false);
-                setSettingsVisible(false);
-              }}
-            >
-              <Icon name="home" size={screenWidth * 0.075} color="#7874ac" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.barButton,
-                { opacity: !isPermissionGranted ? 0.5 : 1 },
-              ]}
-              onPress={async () => {
-                if (isPermissionGranted) {
-                  setModalVisible(!modalVisible);
-                } else {
-                  const permissionResponse = await requestPermission();
-                  if (permissionResponse.granted) {
-                    setModalVisible(!modalVisible);
-                  } else {
-                    Alert.alert(
-                      "Camera Permission Required",
-                      "Please grant camera permission to use this feature."
-                    );
-                  }
-                }
-              }}
-            >
-              <Icon name="qr-code" size={screenWidth * 0.075} color="#7874ac" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.barButton}
-              onPress={() => setSettingsVisible(!settingsVisible)}
-            >
-              <Icon
-                name="construct"
-                size={screenWidth * 0.075}
-                color="#7874ac"
-              />
-            </TouchableOpacity>
-          </View>
+          {/* Footer */}
+          <Footer
+            isPermissionGranted={isPermissionGranted}
+            requestPermission={requestPermission}
+            openModal={openModal}
+            setSelectedPlan={setSelectedPlan}
+            setSelectedExercise={setSelectedExercise}
+            setModalVisible={setModalVisible}
+            settingsVisible={settingsVisible}
+            setSettingsVisible={setSettingsVisible}
+          />
         </SafeAreaView>
       </Modal>
 
@@ -427,120 +441,93 @@ const Index = () => {
         visible={settingsVisible}
         onRequestClose={() => setSettingsVisible(false)}
       >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={[styles.modalContent, { pointerEvents: "box-none" }]}>
+        <SafeAreaView className="flex justify-center items-center h-screen bg-[#f8f8f8]">
+          <View className="flex flex-row justify-center items-center mb-5">
             <TouchableOpacity
-              style={[
-                styles.barButton,
-                {
-                  marginTop: "80%",
-                  height: 35,
-                  width: "50%",
-                  justifyContent: "center",
-                  backgroundColor: "#ff4d4d",
-                  padding: 10,
-                  borderRadius: 5,
-                },
-              ]}
-              onPress={clearStorage}
+              className="flex flex-row bg-[#7076af] rounded-2xl max-w-fit h-[100%]"
+              onPress={() => Linking.openURL("https://kineticare.org/about")}
             >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                Clear All Data
+              <Icon
+                name="information-circle"
+                size={25}
+                color="#ffffff"
+                className="max-w-[30%] text-center ml-2 mt-2 mb-2 rounded-2xl"
+              />
+              <Text className="max-w-[100%] text-white font-bold text-lg mr-2 text-center p-2">
+                Kineticare Info
               </Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.footer}>
+          <View className="flex flex-row justify-center items-center mb-5">
             <TouchableOpacity
-              style={styles.barButton}
-              onPress={() => {
-                setSelectedPlan(null);
-                setSelectedExercise(null);
-                setModalVisible(false);
-                setSettingsVisible(false);
-              }}
-            >
-              <Icon name="home" size={screenWidth * 0.075} color="#7874ac" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.barButton,
-                { opacity: !isPermissionGranted ? 0.5 : 1 },
-              ]}
-              onPress={async () => {
-                if (isPermissionGranted) {
-                  setModalVisible(!modalVisible);
-                } else {
-                  const permissionResponse = await requestPermission();
-                  if (permissionResponse.granted) {
-                    setModalVisible(!modalVisible);
-                  } else {
-                    Alert.alert(
-                      "Camera Permission Required",
-                      "Please grant camera permission to use this feature."
-                    );
-                  }
-                }
-              }}
-            >
-              <Icon name="qr-code" size={screenWidth * 0.075} color="#7874ac" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.barButton}
-              onPress={() => setSettingsVisible(!settingsVisible)}
+              className="flex flex-row bg-[#74ac85] rounded-2xl max-w-fit h-[100%]"
+              onPress={() => {}}
             >
               <Icon
-                name="construct"
-                size={screenWidth * 0.075}
-                color="#7874ac"
+                name="contrast-outline"
+                size={25}
+                color="#ffffff"
+                className="max-w-[30%] text-center ml-2 mt-2 mb-2 rounded-2xl"
               />
+              <Text className="max-w-[100%] text-white font-bold text-lg mr-2 text-center p-2">
+                High Constrast
+              </Text>
             </TouchableOpacity>
           </View>
+          <View className="flex flex-row justify-center items-center mb-5">
+            <TouchableOpacity
+              className="flex flex-row bg-[#00768c] rounded-2xl max-w-fit h-[100%]"
+              onPress={() => {}}
+            >
+              <Icon
+                name="logo-apple-appstore"
+                size={25}
+                color="#ffffff"
+                className="max-w-[30%] text-center ml-2 mt-2 mb-2 rounded-2xl"
+              />
+              <Text className="max-w-[100%] text-white font-bold text-lg mr-2 text-center p-2">
+                Leave A Review
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View className="flex flex-row justify-center items-center mb-5">
+            <TouchableOpacity
+              className="flex flex-row bg-[#793339] rounded-2xl max-w-fit h-[100%]"
+              onPress={clearStorage}
+            >
+              <Icon
+                name="trash"
+                size={25}
+                color="#ffffff"
+                className="max-w-[30%] text-center ml-2 mt-2 mb-2 rounded-2xl"
+              />
+              <Text className="max-w-[100%] text-white font-bold text-lg mr-2 text-center p-2">
+                Reset Data
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <Footer
+            isPermissionGranted={isPermissionGranted}
+            requestPermission={requestPermission}
+            openModal={openModal}
+            setSelectedPlan={setSelectedPlan}
+            setSelectedExercise={setSelectedExercise}
+            setModalVisible={setModalVisible}
+            settingsVisible={settingsVisible}
+            setSettingsVisible={setSettingsVisible}
+          />
         </SafeAreaView>
       </Modal>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.barButton}
-          onPress={() => {
-            setSelectedPlan(null);
-            setSelectedExercise(null);
-            setModalVisible(false);
-            setSettingsVisible(false);
-          }}
-        >
-          <Icon name="home" size={screenWidth * 0.075} color="#7874ac" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.barButton,
-            { opacity: !isPermissionGranted ? 0.5 : 1 },
-          ]}
-          onPress={async () => {
-            if (isPermissionGranted) {
-              openModal();
-            } else {
-              const permissionResponse = await requestPermission();
-              if (permissionResponse.granted) {
-                openModal();
-              } else {
-                Alert.alert(
-                  "Camera Permission Required",
-                  "Please grant camera permission to use this feature."
-                );
-              }
-            }
-          }}
-        >
-          <Icon name="qr-code" size={screenWidth * 0.075} color="#7874ac" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.barButton}
-          onPress={() => setSettingsVisible(!settingsVisible)}
-        >
-          <Icon name="construct" size={screenWidth * 0.075} color="#7874ac" />
-        </TouchableOpacity>
-      </View>
+      <Footer
+          isPermissionGranted={isPermissionGranted}
+          requestPermission={requestPermission}
+          openModal={openModal}
+          setSelectedPlan={setSelectedPlan}
+          setSelectedExercise={setSelectedExercise}
+          setModalVisible={setModalVisible}
+          settingsVisible={settingsVisible}
+          setSettingsVisible={setSettingsVisible}
+      />
     </SafeAreaView>
   );
 };
