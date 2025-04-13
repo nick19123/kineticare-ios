@@ -39,10 +39,13 @@ export default StyleSheet.create({
     color: '#666',
   },
   footer: {
+    position: 'absolute', // Fix the footer at the bottom
+    bottom: 10, // Align it to the bottom of the screen
+    left: 0,
+    right: 0,
     padding: 20,
     flexDirection: 'row',
     justifyContent: 'space-around',
-    //alignItems: 'center',
     backgroundColor: '#f8f8f8',
     alignItems: 'center',
   },

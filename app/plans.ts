@@ -3,37 +3,37 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initialPlans } from './db';
 
 export interface Exercise {
-  exerciseImage: string | { uri: string }; // Updated to match "exerciseImage"
-  exerciseID: number; // Added "exerciseID"
-  exerciseName: string; // Updated to match "exerciseName"
-  sequenceNum: number; // Added "sequenceNum"
-  reps: number; // Updated to match "reps" as a number
-  sets: number; // Added "sets"
-  duration: number; // Added "duration"
-  time: number; // Added "time"
-  description: string; // Updated to match "description"
+  eid: string;
+  n: string;
+  sn: number;
+  r: number | null;
+  s: number | null;
+  d: string | null;
+  t: string | null;
+  de: string | null;
+  i: string | undefined;
 }
 
 export interface Plan {
-  planName: string; // Updated to match "planName"
-  exercises: Exercise[]; // Array of exercises
+  p: string;
+  e: Exercise[];
 }
 
 export const loadPlansFromStorage = async (): Promise<Plan[]> => {
   if (typeof window === 'undefined') {
-    // Return initialPlans if running in a non-browser environment
-    return Object.values(initialPlans).map((plan: any) => ({
-      planName: plan.planName,
-      exercises: plan.exercises.map((exercise: any) => ({
-        exerciseImage: exercise.exerciseImage,
-        exerciseID: exercise.exerciseID,
-        exerciseName: exercise.exerciseName,
-        sequenceNum: exercise.sequenceNum || 0,
-        reps: parseInt(exercise.reps, 10) || 0,
-        sets: parseInt(exercise.sets, 10) || 0,
-        duration: parseInt(exercise.duration, 10) || 0,
-        time: parseInt(exercise.time, 10) || 0,
-        description: exercise.description,
+    // Use initialPlans directly when not in a browser environment
+    return Object.values(initialPlans || {}).map((plan: any) => ({
+      p: plan.p || "",
+      e: plan.e.map((exercise: any) => ({
+        eid: exercise.eid,
+        n: exercise.n,
+        sn: exercise.sn,
+        r: exercise.r,
+        s: exercise.s,
+        d: exercise.d,
+        t: exercise.t,
+        de: exercise.de,
+        i: exercise.i,
       })),
     }));
   }
@@ -42,55 +42,53 @@ export const loadPlansFromStorage = async (): Promise<Plan[]> => {
     const plansData = await AsyncStorage.getItem('plans');
     const parsedPlans = plansData ? JSON.parse(plansData) : null;
 
-    // If parsedPlans is null or not an array, fall back to initialPlans
     if (!parsedPlans || !Array.isArray(parsedPlans)) {
       console.warn('Plans data is missing or invalid. Falling back to initialPlans.');
-      return Object.values(initialPlans).map((plan: any) => ({
-        planName: plan.planName,
-        exercises: plan.exercises.map((exercise: any) => ({
-          exerciseImage: exercise.exerciseImage,
-          exerciseID: exercise.exerciseID,
-          exerciseName: exercise.exerciseName,
-          sequenceNum: exercise.sequenceNum || 0,
-          reps: parseInt(exercise.reps, 10) || 0,
-          sets: parseInt(exercise.sets, 10) || 0,
-          duration: parseInt(exercise.duration, 10) || 0,
-          time: parseInt(exercise.time, 10) || 0,
-          description: exercise.description,
+      return Object.values(initialPlans || {}).map((plan: any) => ({
+        p: plan.p || "",
+        e: plan.e.map((exercise: any) => ({
+          eid: exercise.eid,
+          n: exercise.n,
+          sn: exercise.sn,
+          r: exercise.r,
+          s: exercise.s,
+          d: exercise.d,
+          t: exercise.t,
+          de: exercise.de,
+          i: exercise.i,
         })),
       }));
     }
 
-    // Transform the data if necessary
     return parsedPlans.map((plan: any) => ({
-      planName: plan.planName,
-      exercises: plan.exercises.map((exercise: any) => ({
-        exerciseImage: exercise.exerciseImage,
-        exerciseID: exercise.exerciseID,
-        exerciseName: exercise.exerciseName,
-        sequenceNum: exercise.sequenceNum,
-        reps: exercise.reps,
-        sets: exercise.sets,
-        duration: exercise.duration,
-        time: exercise.time,
-        description: exercise.description,
+      p: plan.p,
+      e: plan.e.map((exercise: any) => ({
+        eid: exercise.eid,
+        n: exercise.n,
+        sn: exercise.sn,
+        r: exercise.r,
+        s: exercise.s,
+        d: exercise.d,
+        t: exercise.t,
+        de: exercise.de,
+        i: exercise.i,
       })),
     }));
   } catch (error) {
     console.error('Error loading plans from storage:', error);
     // Fall back to initialPlans in case of an error
-    return Object.values(initialPlans).map((plan: any) => ({
-      planName: plan.planName,
-      exercises: plan.exercises.map((exercise: any) => ({
-        exerciseImage: exercise.exerciseImage,
-        exerciseID: exercise.exerciseID,
-        exerciseName: exercise.exerciseName,
-        sequenceNum: exercise.sequenceNum || 0,
-        reps: parseInt(exercise.reps, 10) || 0,
-        sets: parseInt(exercise.sets, 10) || 0,
-        duration: parseInt(exercise.duration, 10) || 0,
-        time: parseInt(exercise.time, 10) || 0,
-        description: exercise.description,
+    return Object.values(initialPlans || {}).map((plan: any) => ({
+      p: plan.p || "",
+      e: plan.e.map((exercise: any) => ({
+        eid: exercise.eid,
+        n: exercise.n,
+        sn: exercise.sn,
+        r: exercise.r,
+        s: exercise.s,
+        d: exercise.d,
+        t: exercise.t,
+        de: exercise.de,
+        i: exercise.i,
       })),
     }));
   }

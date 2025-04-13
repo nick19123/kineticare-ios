@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.nickrouse19.kineticareios"
+      "bundleIdentifier": "com.nickrouse19.kineticareios",
+      "icon": "./app/assets/icon.png"
     },
     "android": {
       "adaptiveIcon": {
@@ -33,7 +34,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splashscreen.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -50,6 +51,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "7cf57e9c-de8f-40f5-b3c0-dd07f4e3f03e"
+      }
     }
   }
 }
