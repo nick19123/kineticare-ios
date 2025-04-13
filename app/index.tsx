@@ -10,8 +10,8 @@ import {
   Dimensions,
   Alert,
   Linking,
+  StatusBar,
 } from "react-native";
-import styles from "./styles";
 import { Plan, Exercise, loadPlansFromStorage } from "./plans";
 import initialPlans from "./db";
 import {
@@ -27,8 +27,7 @@ import { Cloudinary } from "@cloudinary/url-gen";
 import { decode } from "base64-arraybuffer";
 import "../global.css";
 import Footer from "@/components/Footer";
-
-const screenWidth = Dimensions.get("window").width;
+import { SplashScreen } from "expo-router";
 
 const Index = () => {
   const [planData, setPlanData] = useState<Plan[]>([]);
@@ -37,19 +36,17 @@ const Index = () => {
     null
   );
 
-  //camera
   const [permission, requestPermission] = useCameraPermissions();
   const isPermissionGranted = Boolean(permission?.granted);
-  const isScanningRef = useRef(true);
   const isProcessingScan = useRef(false);
   const [isScanning, setIsScanning] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
   const [modalVisible, setModalVisible] = useState(false);
 
-  //settings
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const screenWidth = Dimensions.get("window").width;
+  const isTablet = Dimensions.get("window").width >= 744;
 
-  //images
   const cld = new Cloudinary({
     cloud: { cloudName: process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME },
     url: { secure: true },
@@ -72,11 +69,10 @@ const Index = () => {
 
   useEffect(() => {
     if (fontsLoaded && planData.length > 0) {
-      // SplashScreen.hideAsync(); // Hide splash screen once data and fonts are loaded
+      SplashScreen.hideAsync();
     }
   }, [fontsLoaded, planData]);
 
-  // If fonts aren't loaded, return null to keep the splash screen visible
   if (!fontsLoaded) {
     return null;
   }
@@ -185,21 +181,19 @@ const Index = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={[styles.logoContainer, { alignItems: "center" }]}>
+    <SafeAreaView className="flex-1 bg-[#f8f8f8]">
+      <StatusBar barStyle="dark-content" />
+      <View className="py-2 px-5 bg-[#f8f8f8] items-center">
+        <View className="items-center">
           <Image
             source={require("./assets/images/logo.png")}
-            style={styles.logo}
+            className="w-[300px] h-[100px] object-contain"
           />
         </View>
       </View>
 
-      {/* Content */}
-      <View style={styles.content}>
+      <View className="flex-1 p-5">
         {selectedExercise ? (
-          // Display selected exercise details
           <View className="flex flex-column justify-center items-center mt-20">
             <AdvancedImage
               cldImg={cld
@@ -271,7 +265,6 @@ const Index = () => {
             </View>
           </View>
         ) : selectedPlan ? (
-          // Display selected plan details
           <View>
             {selectedPlan.e.map((exercise, index) => {
               console.log(cld.image(exercise.i).toURL());
@@ -281,36 +274,55 @@ const Index = () => {
                   onPress={() => setSelectedExercise(exercise)}
                 >
                   <View className="flex flex-row justify-center items-center rounded-2xl overflow-hidden bg-[#74ac85] mb-2">
-                    <View className="flex-1 p-2 bg-[#5e9670]">
-                      <Text className="text-xl font-semibold text-white text-center">
-                        {exercise.sn}
-                      </Text>
-                    </View>
-                    <View className="flex-[2] p-2">
-                      <Text className="text-xl font-semibold text-white text-center">
-                        {exercise.n.length > 20
-                          ? exercise.n.slice(0, 17) + "..."
-                          : exercise.n}
-                      </Text>
+                    <View className="flex-1 flex flex-row justify-center items-center rounded-2xl bg-[#74ac85]">
+                      <View className="flex-1 p-3 bg-[#5e9670]">
+                        <Text
+                          className={`text-[4vw] ${
+                            isTablet ? "text-[5vw]" : "text-[4vw]"
+                          } font-semibold text-white text-center`}
+                        >
+                          {exercise.sn}
+                        </Text>
+                      </View>
+                      <View className="flex-[2] p-2">
+                        <Text
+                          className={`text-[4vw] ${
+                            isTablet ? "text-[5vw]" : "text-[4vw]"
+                          } font-semibold text-white text-center`}
+                        >
+                          {exercise.n.length > 20
+                            ? exercise.n.slice(0, 17) + "..."
+                            : exercise.n}
+                        </Text>
+                      </View>
                     </View>
                   </View>
                 </TouchableOpacity>
               );
             })}
           </View>
-        ) : // Display list of plans or "No plans available" message
-        memoizedPlanData.length === 0 ? (
+        ) : memoizedPlanData.length === 0 ? (
           <Text>No plans available</Text>
         ) : (
           memoizedPlanData.map((plan, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.card}
+              className={`bg-[#e0e0e0] ${
+                isTablet ? "p-[5vw]" : "p-[4vw]"
+              } mb-3 rounded-xl`}
               onPress={() => setSelectedPlan(plan)}
               onLongPress={() => showRemovePlan(plan)}
             >
-              <Text style={styles.cardTitle}>{plan.p}</Text>
-              <Text style={styles.cardDescription}>
+              <Text
+                className={`text-[${
+                  isTablet ? "4vw" : "4vw"
+                }] text-[#7076af] font-bold`}
+              >
+                {plan.p}
+              </Text>
+              <Text
+                className={`text-[${isTablet ? "4vw" : "3vw"}] text-[#666666]`}
+              >
                 {plan.e.length} exercises
               </Text>
             </TouchableOpacity>
@@ -318,26 +330,23 @@ const Index = () => {
         )}
       </View>
 
-      {/* QR Code Scanner Modal */}
       <Modal
         transparent={true}
         visible={modalVisible}
         onRequestClose={closeModal}
       >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)} // Close modal on button press
-            >
-              <Icon
-                name="close-circle"
-                size={screenWidth * 0.105}
-                color="#7874ac"
-              />
-            </TouchableOpacity>
+        <SafeAreaView className="flex-1 justify-center items-center">
+          <View className="flex-row flex-wrap justify-center w-full h-full bg-[#f8f8f8] rounded-[10px] p-5">
             <CameraView
-              style={styles.cameraView}
+              style={{
+                position: "absolute",
+                top: "10%",
+                width: "95%",
+                height: "80%",
+                borderRadius: 10,
+                overflow: "hidden",
+                backgroundColor: "#000",
+              }}
               facing="back"
               onBarcodeScanned={async ({ data }) => {
                 if (isProcessingScan.current) return;
@@ -407,15 +416,15 @@ const Index = () => {
                 } finally {
                   setTimeout(() => {
                     isProcessingScan.current = false;
-                  }, 3000); // gives time before next scan can trigger
+                  }, 3000);
                 }
               }}
             >
-              <View style={styles.cameraOverlay}>
-                <View style={styles.scanningBox}>
+              <View className="absolute top-0 left-0 right-0 bottom-0 opacity-50 justify-center items-center">
+                <View className="w-[70%] aspect-square border-2 border-[#7874ac] rounded-2xl bg-transparent z-10">
                   <Image
-                    source={require("./assets/images/iosicon.png")} // Ensure the path to the image is correct
-                    style={styles.scanningBoxImage}
+                    source={require("./assets/images/iosicon.png")}
+                    className="w-full h-full aspect-square resize-contain opacity-50"
                   />
                 </View>
               </View>
@@ -441,70 +450,118 @@ const Index = () => {
         visible={settingsVisible}
         onRequestClose={() => setSettingsVisible(false)}
       >
-        <SafeAreaView className="flex justify-center items-center h-screen bg-[#f8f8f8]">
-          <View className="flex flex-row justify-center items-center mb-5">
-            <TouchableOpacity
-              className="flex flex-row bg-[#7076af] rounded-2xl max-w-fit h-[100%]"
-              onPress={() => Linking.openURL("https://kineticare.org/about")}
-            >
-              <Icon
-                name="information-circle"
-                size={25}
-                color="#ffffff"
-                className="max-w-[30%] text-center ml-2 mt-2 mb-2 rounded-2xl"
-              />
-              <Text className="max-w-[100%] text-white font-bold text-lg mr-2 text-center p-2">
-                Kineticare Info
-              </Text>
-            </TouchableOpacity>
+        <SafeAreaView className="flex-1 bg-[#f8f8f8]">
+          <View className="items-center">
+            <Image
+              source={require("./assets/images/logo.png")}
+              className="w-[300px] h-[100px] object-contain"
+            />
           </View>
-          <View className="flex flex-row justify-center items-center mb-5">
-            <TouchableOpacity
-              className="flex flex-row bg-[#74ac85] rounded-2xl max-w-fit h-[100%]"
-              onPress={() => {}}
-            >
-              <Icon
-                name="contrast-outline"
-                size={25}
-                color="#ffffff"
-                className="max-w-[30%] text-center ml-2 mt-2 mb-2 rounded-2xl"
-              />
-              <Text className="max-w-[100%] text-white font-bold text-lg mr-2 text-center p-2">
-                High Constrast
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View className="flex flex-row justify-center items-center mb-5">
-            <TouchableOpacity
-              className="flex flex-row bg-[#00768c] rounded-2xl max-w-fit h-[100%]"
-              onPress={() => {}}
-            >
-              <Icon
-                name="logo-apple-appstore"
-                size={25}
-                color="#ffffff"
-                className="max-w-[30%] text-center ml-2 mt-2 mb-2 rounded-2xl"
-              />
-              <Text className="max-w-[100%] text-white font-bold text-lg mr-2 text-center p-2">
-                Leave A Review
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View className="flex flex-row justify-center items-center mb-5">
-            <TouchableOpacity
-              className="flex flex-row bg-[#793339] rounded-2xl max-w-fit h-[100%]"
-              onPress={clearStorage}
-            >
-              <Icon
-                name="trash"
-                size={25}
-                color="#ffffff"
-                className="max-w-[30%] text-center ml-2 mt-2 mb-2 rounded-2xl"
-              />
-              <Text className="max-w-[100%] text-white font-bold text-lg mr-2 text-center p-2">
-                Reset Data
-              </Text>
-            </TouchableOpacity>
+          <View className="justify-center items-center p-[3vh]">
+            <View className="flex flex-row items-center mb-5">
+              <TouchableOpacity
+                className={`flex flex-row bg-[#7076af] rounded-2xl ${
+                  isTablet ? "w-[80vw] h-[8vw]" : "w-[90vw] h-[10vw]"
+                }`}
+                onPress={() => Linking.openURL("https://kineticare.org/about")}
+              >
+                <Icon
+                  name="information-circle"
+                  size={isTablet ? 40 : 25}
+                  color="#ffffff"
+                  className={`text-center mt-2 mb-2 rounded-2xl ${
+                    isTablet ? "w-[8vw] h-[8vw]" : "w-[10vw] h-[10vw]"
+                  }`}
+                />
+                <Text
+                  className={`text-white font-bold text-center p-2 ${
+                    isTablet
+                      ? "mt-2 text-3xl max-w-[60vw]"
+                      : "mt-1 text-base max-w-[50vw]"
+                  }`}
+                >
+                  Kineticare Info
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <View className="flex flex-row justify-center items-center mb-5">
+              <TouchableOpacity
+                className={`flex flex-row bg-[#74ac85] rounded-2xl ${
+                  isTablet ? "w-[80vw] h-[8vw]" : "w-[90vw] h-[10vw]"
+                }`}
+                onPress={() => Alert.alert(`"High Contrast Mode"\n will be added in the next version`)}
+              >
+                <Icon
+                  name="contrast-outline"
+                  size={isTablet ? 40 : 25}
+                  color="#ffffff"
+                  className={`text-center mt-2 mb-2 rounded-2xl ${
+                    isTablet ? "w-[8vw] h-[8vw]" : "w-[10vw] h-[10vw]"
+                  }`}
+                />
+                <Text
+                  className={`text-white font-bold text-center p-2 ${
+                    isTablet
+                      ? "mt-2 text-3xl max-w-[60vw]"
+                      : "mt-1 text-base max-w-[50vw]"
+                  }`}
+                >
+                  High Constrast
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <View className="flex flex-row justify-center items-center mb-5">
+              <TouchableOpacity
+                className={`flex flex-row bg-[#00768c] rounded-2xl ${
+                  isTablet ? "w-[80vw] h-[8vw]" : "w-[90vw] h-[10vw]"
+                }`}
+                onPress={() => Alert.alert(`"Working Review Button"\n will be added in the next version`)}
+              >
+                <Icon
+                  name="logo-apple-appstore"
+                  size={isTablet ? 40 : 25}
+                  color="#ffffff"
+                  className={`text-center mt-2 mb-2 rounded-2xl ${
+                    isTablet ? "w-[8vw] h-[8vw]" : "w-[10vw] h-[10vw]"
+                  }`}
+                />
+                <Text
+                  className={`text-white font-bold text-center p-2 ${
+                    isTablet
+                      ? "mt-2 text-3xl max-w-[60vw]"
+                      : "mt-1 text-base max-w-[50vw]"
+                  }`}
+                >
+                  Leave a Review
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <View className="flex flex-row justify-center items-center mb-5">
+              <TouchableOpacity
+                className={`flex flex-row bg-[#793339] rounded-2xl ${
+                  isTablet ? "w-[80vw] h-[8vw]" : "w-[90vw] h-[10vw]"
+                }`}
+                onPress={clearStorage}
+              >
+                <Icon
+                  name="trash"
+                  size={isTablet ? 40 : 25}
+                  color="#ffffff"
+                  className={`text-center mt-2 mb-2 rounded-2xl ${
+                    isTablet ? "w-[8vw] h-[8vw]" : "w-[10vw] h-[10vw]"
+                  }`}
+                />
+                <Text
+                  className={`text-white font-bold text-center p-2 ${
+                    isTablet
+                      ? "mt-2 text-3xl max-w-[60vw]"
+                      : "mt-1 text-base max-w-[50vw]"
+                  }`}
+                >
+                  Reset Data
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <Footer
             isPermissionGranted={isPermissionGranted}
@@ -519,14 +576,14 @@ const Index = () => {
         </SafeAreaView>
       </Modal>
       <Footer
-          isPermissionGranted={isPermissionGranted}
-          requestPermission={requestPermission}
-          openModal={openModal}
-          setSelectedPlan={setSelectedPlan}
-          setSelectedExercise={setSelectedExercise}
-          setModalVisible={setModalVisible}
-          settingsVisible={settingsVisible}
-          setSettingsVisible={setSettingsVisible}
+        isPermissionGranted={isPermissionGranted}
+        requestPermission={requestPermission}
+        openModal={openModal}
+        setSelectedPlan={setSelectedPlan}
+        setSelectedExercise={setSelectedExercise}
+        setModalVisible={setModalVisible}
+        settingsVisible={settingsVisible}
+        setSettingsVisible={setSettingsVisible}
       />
     </SafeAreaView>
   );
