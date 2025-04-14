@@ -19,7 +19,7 @@ import {
   Roboto_400Regular,
   Roboto_700Bold,
 } from "@expo-google-fonts/roboto";
-import Icon from "react-native-vector-icons/Ionicons";
+import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from "expo-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AdvancedImage } from "cloudinary-react-native";
@@ -465,7 +465,7 @@ const Index = () => {
                 }`}
                 onPress={() => Linking.openURL("https://kineticare.org/about")}
               >
-                <Icon
+                <Ionicons
                   name="information-circle"
                   size={isTablet ? 40 : 25}
                   color="#ffffff"
@@ -491,7 +491,7 @@ const Index = () => {
                 }`}
                 onPress={() => Alert.alert(`"High Contrast Mode"\n will be added in the next version`)}
               >
-                <Icon
+                <Ionicons
                   name="contrast-outline"
                   size={isTablet ? 40 : 25}
                   color="#ffffff"
@@ -517,7 +517,7 @@ const Index = () => {
                 }`}
                 onPress={() => Alert.alert(`"Working Review Button"\n will be added in the next version`)}
               >
-                <Icon
+                <Ionicons
                   name="logo-apple-appstore"
                   size={isTablet ? 40 : 25}
                   color="#ffffff"
@@ -543,7 +543,7 @@ const Index = () => {
                 }`}
                 onPress={clearStorage}
               >
-                <Icon
+                <Ionicons
                   name="trash"
                   size={isTablet ? 40 : 25}
                   color="#ffffff"

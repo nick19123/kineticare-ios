@@ -1,6 +1,6 @@
 import React from "react";
 import { View, TouchableOpacity, Alert, Dimensions } from "react-native";
-import Icon from "react-native-vector-icons/Ionicons";
+import { Ionicons } from '@expo/vector-icons';
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -40,7 +40,20 @@ export default function Footer({
   };
 
   return (
-    <View className="absolute bottom-2 left-0 right-0 px-5 py-5 flex-row justify-around items-center bg-[#f8f8f8]">
+    <View
+    style={{
+      position: "absolute",
+      bottom: 0, // Position it at the bottom of the screen
+      left: 0,
+      right: 0,
+      paddingHorizontal: 20,
+      paddingVertical: 20,
+      backgroundColor: "#f8f8f8",
+      flexDirection: "row",
+      justifyContent: "space-around",
+      alignItems: "center",
+    }}
+    >
       <TouchableOpacity
         className="px-2.5 py-0 rounded-[5px]"
         onPress={() => {
@@ -50,7 +63,7 @@ export default function Footer({
           setSettingsVisible(false);
         }}
       >
-        <Icon name="home" size={screenWidth * 0.075} color="#7874ac" />
+        <Ionicons name="home" size={screenWidth * 0.075} color="#7874ac" />
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -64,7 +77,7 @@ export default function Footer({
           handleQrPress();
         }}
       >
-        <Icon name="qr-code" size={screenWidth * 0.075} color="#7874ac" />
+        <Ionicons name="qr-code" size={screenWidth * 0.075} color="#7874ac" />
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -76,7 +89,7 @@ export default function Footer({
           setSettingsVisible(true);
         }}
       >
-        <Icon name="construct" size={screenWidth * 0.075} color="#7874ac" />
+        <Ionicons name="construct" size={screenWidth * 0.075} color="#7874ac" />
       </TouchableOpacity>
     </View>
   );
