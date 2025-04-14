@@ -11,7 +11,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.nickrouse19.kineticareios",
-      "icon": "./app/assets/icon.png"
+      "icon": "./app/assets/images/icon.png",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -27,7 +30,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./app/assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
